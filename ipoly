@@ -28,10 +28,15 @@ def getline(message):
     index = poly.expect_list(prompts)
     return index
 
-while True:
-    index = getline('> ')
-    while index != 0:
-        index = getline('# ')
+try:
+    while True:
+        index = getline('> ')
+        while index != 0:
+            index = getline('# ')
+        sys.stdout.write(poly.before)
+except pexpect.EOF:
     sys.stdout.write(poly.before)
+except EOFError:
+    pass
 
 poly.close()
