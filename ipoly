@@ -1,0 +1,37 @@
+#!/usr/bin/env python
+
+from __future__ import unicode_literals
+from prompt_toolkit import prompt
+from prompt_toolkit.layout.lexers import PygmentsLexer
+from prompt_toolkit.history import InMemoryHistory
+from pygments.lexers.ml import SMLLexer
+import pexpect, sys, uuid
+
+poly = pexpect.spawn('poly')
+poly.setecho(False)
+poly.expect('> ')
+
+prompt1 = uuid.uuid4().hex
+prompt2 = uuid.uuid4().hex
+poly.sendline(
+    'PolyML.Compiler.prompt1 := "%s"; PolyML.Compiler.prompt2 := "%s";' %
+    (prompt1, prompt2))
+poly.expect(prompt1)
+
+history = InMemoryHistory()
+prompts = poly.compile_pattern_list([prompt1, prompt2])
+lexer=PygmentsLexer(SMLLexer)
+
+def getline(message):
+    line = prompt(message, lexer=lexer, history=history, vi_mode=True)
+    poly.sendline(line)
+    index = poly.expect_list(prompts)
+    return index
+
+while True:
+    index = getline('> ')
+    while index != 0:
+        index = getline('# ')
+    sys.stdout.write(poly.before)
+
+poly.close()
