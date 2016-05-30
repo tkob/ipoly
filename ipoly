@@ -2,6 +2,7 @@
 
 from __future__ import unicode_literals
 from prompt_toolkit import prompt
+from prompt_toolkit.completion import Completer, Completion
 from prompt_toolkit.layout.lexers import PygmentsLexer
 from prompt_toolkit.history import InMemoryHistory
 from pygments.lexers.ml import SMLLexer
@@ -22,14 +23,38 @@ history = InMemoryHistory()
 prompts = poly.compile_pattern_list([prompt1, prompt2])
 lexer=PygmentsLexer(SMLLexer)
 
+class PolyMLCompleter(Completer):
+    def __init__(self, poly):
+        self.poly = poly
+    def globals(self, label):
+        self.poly.sendline('List.app (fn (name, _) => TextIO.output (TextIO.stdOut, name ^ "\\n")) ((#%s PolyML.globalNameSpace) ());' % label)
+        self.poly.expect(prompt1)
+        names = self.poly.before.splitlines()[:-1]
+        return names
+    def update(self):
+        self.fixes   = self.globals("allFix")
+        self.functs  = self.globals("allFunct")
+        self.sigs    = self.globals("allSig")
+        self.structs = self.globals("allStruct")
+        self.types   = self.globals("allType")
+        self.vals    = self.globals("allVal")
+    def get_completions(self, document, complete_event):
+        word_before_cursor = document.get_word_before_cursor()
+        for sym in self.vals:
+            if sym.startswith(word_before_cursor):
+                yield Completion(sym, -len(word_before_cursor))
+
+completer = PolyMLCompleter(poly)
+
 def getline(message):
-    line = prompt(message, lexer=lexer, history=history, vi_mode=True)
+    line = prompt(message, lexer=lexer, history=history, completer=completer, vi_mode=True)
     poly.sendline(line)
     index = poly.expect_list(prompts)
     return index
 
 try:
     while True:
+        completer.update()
         index = getline('> ')
         while index != 0:
             index = getline('# ')
