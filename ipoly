@@ -40,7 +40,7 @@ class PolyMLCompleter(Completer):
         self.vals    = self.globals("allVal")
     def get_completions(self, document, complete_event):
         word_before_cursor = document.get_word_before_cursor()
-        for sym in self.vals:
+        for sym in self.vals + self.structs:
             if sym.startswith(word_before_cursor):
                 yield Completion(sym, -len(word_before_cursor))
 
