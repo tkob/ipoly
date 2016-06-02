@@ -32,12 +32,16 @@ class PolyMLCompleter(Completer):
         names = self.poly.before.splitlines()[:-1]
         return names
     def update(self):
+        self.poly.sendline('val %s = it;' % it)
+        self.poly.expect(prompt1)
         self.fixes   = self.globals("allFix")
         self.functs  = self.globals("allFunct")
         self.sigs    = self.globals("allSig")
         self.structs = self.globals("allStruct")
         self.types   = self.globals("allType")
         self.vals    = self.globals("allVal")
+        self.poly.sendline('val it = %s;' % it)
+        self.poly.expect(prompt1)
     def get_completions(self, document, complete_event):
         word_before_cursor = document.get_word_before_cursor()
         for sym in self.vals + self.structs:
@@ -46,6 +50,7 @@ class PolyMLCompleter(Completer):
 
 completer = PolyMLCompleter(poly)
 
+it = 'it_' + uuid.uuid4().hex
 def getline(message):
     line = prompt(message, lexer=lexer, history=history, completer=completer, vi_mode=True)
     poly.sendline(line)
