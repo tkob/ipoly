@@ -23,6 +23,8 @@ history = InMemoryHistory()
 prompts = poly.compile_pattern_list([prompt1, prompt2])
 lexer=PygmentsLexer(SMLLexer)
 
+it = 'it_' + uuid.uuid4().hex
+
 class PolyMLCompleter(Completer):
     def __init__(self, poly):
         self.poly = poly
@@ -45,12 +47,11 @@ class PolyMLCompleter(Completer):
     def get_completions(self, document, complete_event):
         word_before_cursor = document.get_word_before_cursor()
         for sym in self.vals + self.structs:
-            if sym.startswith(word_before_cursor):
+            if sym.startswith(word_before_cursor) and sym != it:
                 yield Completion(sym, -len(word_before_cursor))
 
 completer = PolyMLCompleter(poly)
 
-it = 'it_' + uuid.uuid4().hex
 def getline(message):
     line = prompt(message, lexer=lexer, history=history, completer=completer, vi_mode=True)
     poly.sendline(line)
